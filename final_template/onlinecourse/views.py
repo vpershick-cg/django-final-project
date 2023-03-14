@@ -110,12 +110,14 @@ def submit(request, course_id):
     # Create a submission object referring to the enrollment
     Submission.objects.create(enrollment=assoc_enrollment)
     # Collect the selected choices from exam form
-    submitted_anwsers = []
+    submitted_responses = []
     submitted_responses = extract_answers(request);
     # Add each selected choice object to the submission object
     Submission.objects.update(chocies=submitted_responses)
+    #Submission.save()
     # Redirect to show_exam_result with the submission id
-    ##return redirect( ...result view... show_exam_result ... )
+    return HttpResponseRedirect(reverse(viewname='onlinecourse:show_exam_result', args=(course.id, submission.id,)))
+
 
 # A method to collect the selected choices from the exam form from the request object
 def extract_answers(request):
@@ -130,8 +132,19 @@ def extract_answers(request):
 
 # An exam result view to check if learner passed exam and show their question results and result for each question
 def show_exam_result(request, course_id, submission_id):
+    context = {}
     # Get course and submission based on their ids
+    course = get_object_or_404(Course, pk=course_id)
+    submission = get_object_or_404(Submission, pk=submission_id)
     # Get the selected choice ids from the submission record
+    selected_responses = submission.chocies
     # For each selected choice, check if it is a correct answer or not
     # Calculate the total score
-
+    total_score = 0
+    for selected_choice in selected_responses:
+        if is_get_score(selected_response):
+            total_score += 1
+    # Add the course, selected_ids, and grade to context for rendering html page
+    context['course'] = course
+    context['selected_ids'] = selected_responses
+    context['grade'] = total_score
